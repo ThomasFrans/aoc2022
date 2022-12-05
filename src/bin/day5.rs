@@ -3,23 +3,84 @@ use std::{
     fmt::Display,
     fs::File,
     io::{BufRead, BufReader},
+    ops::{Deref, DerefMut},
     process::ExitCode,
 };
 
 #[derive(Debug, Clone)]
 struct Crate(char);
+
+impl Deref for Crate {
+    type Target = char;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Crate {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Stack(Vec<Crate>);
+
+impl Deref for Stack {
+    type Target = Vec<Crate>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Stack {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Crates(Vec<Stack>);
+
+impl Deref for Crates {
+    type Target = Vec<Stack>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Crates {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug)]
 struct Move {
     pub amount: usize,
     pub from: usize,
     pub to: usize,
 }
+
 #[derive(Debug)]
 struct Moves(Vec<Move>);
+
+impl Deref for Moves {
+    type Target = Vec<Move>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Moves {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl Display for Crate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -108,6 +169,56 @@ impl TryFrom<Vec<String>> for Moves {
     }
 }
 
+struct CrateMover9000<'a> {
+    crates: &'a mut Crates,
+    moves: &'a Moves,
+}
+
+impl<'a> CrateMover9000<'a> {
+    fn new(crates: &'a mut Crates, moves: &'a Moves) -> Self {
+        Self {
+            crates,
+            moves,
+        }
+    }
+
+    fn execute(&mut self) {
+        self.moves.iter().for_each(|single| {
+            for _ in 0..single.amount {
+                let popped_crate = self.crates[single.from - 1].pop().unwrap();
+                self.crates[single.to - 1].push(popped_crate);
+            }
+        });
+    }
+}
+
+struct CrateMover9001<'a> {
+    crates: &'a mut Crates,
+    moves: &'a Moves,
+}
+
+impl<'a> CrateMover9001<'a> {
+    fn new(crates: &'a mut Crates, moves: &'a Moves) -> Self {
+        Self {
+            crates,
+            moves,
+        }
+    }
+
+    fn execute(&mut self) {
+        self.moves.iter().for_each(|single| {
+            let mut reverse = Vec::new();
+            for _ in 0..single.amount {
+                let popped_crate = self.crates[single.from - 1].pop().unwrap();
+                reverse.push(popped_crate);
+            }
+            for _ in 0..single.amount {
+                self.crates[single.to - 1].push(reverse.pop().unwrap());
+            }
+        });
+    }
+}
+
 fn main() -> ExitCode {
     let file = File::open("data/day5.txt").unwrap();
     let lines = BufReader::new(file).lines();
@@ -131,31 +242,17 @@ fn main() -> ExitCode {
 
     // Part 1
     let mut crates1 = crates.clone();
-    moves.0.iter().for_each(|single| {
-        for _ in 0..single.amount {
-            let popped_crate = crates1.0[single.from - 1].0.pop().unwrap();
-            crates1.0[single.to - 1].0.push(popped_crate);
-        }
-    });
-    crates1.0.iter().for_each(|stack| {
-        print!("{}", stack.0.last().unwrap());
+    CrateMover9000::new(&mut crates1, &moves).execute();
+    crates1.iter().for_each(|stack| {
+        print!("{}", stack.last().unwrap());
     });
     println!(" with CrateMover9000.");
 
     // Part 2
     let mut crates2 = crates;
-    moves.0.iter().for_each(|single| {
-        let mut reverse = Vec::new();
-        for _ in 0..single.amount {
-            let popped_crate = crates2.0[single.from - 1].0.pop().unwrap();
-            reverse.push(popped_crate);
-        }
-        for _ in 0..single.amount {
-            crates2.0[single.to - 1].0.push(reverse.pop().unwrap());
-        }
-    });
-    crates2.0.iter().for_each(|stack| {
-        print!("{}", stack.0.last().unwrap());
+    CrateMover9001::new(&mut crates2, &moves).execute();
+    crates2.iter().for_each(|stack| {
+        print!("{}", stack.last().unwrap());
     });
     println!(" with CrateMover9001.");
 
