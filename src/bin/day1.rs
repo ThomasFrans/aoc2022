@@ -1,7 +1,10 @@
-use std::{fs::File, io::{BufReader, BufRead}, process::exit};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    process::exit,
+};
 
 use itertools::Itertools;
-
 
 fn main() -> Result<(), String> {
     let file_location = "data/day1.txt";
@@ -12,7 +15,8 @@ fn main() -> Result<(), String> {
 
     let file_reader = BufReader::new(file);
 
-    let groups = file_reader.lines()
+    let groups = file_reader
+        .lines()
         .map(|line| {
             let Ok(line) = line else {
                 eprintln!("Line {line:?} isn't a valid string.");
@@ -20,34 +24,25 @@ fn main() -> Result<(), String> {
             };
             line
         })
-        .group_by(|line| {
-            line.is_empty()
-        });
+        .group_by(|line| line.is_empty());
 
-
-    let elves = groups.into_iter()
+    let elves = groups
+        .into_iter()
         .enumerate()
-        .filter(|(index, _)| {
-            if *index % 2 == 0 {
-                true
-            } else {
-                false
-            }
-        })
-        .map(|(_, other)| {
-            other
-        });
+        .filter(|(index, _)| *index % 2 == 0)
+        .map(|(_, other)| other);
 
-    let calories = elves.map(|(_, group)| {
-        let mut total = 0;
-        for item in group {
-            total += item.parse::<u32>().unwrap();
-        }
-        total
-    })
-    .sorted()
-    .rev()
-    .collect::<Vec<_>>();
+    let calories = elves
+        .map(|(_, group)| {
+            let mut total = 0;
+            for item in group {
+                total += item.parse::<u32>().unwrap();
+            }
+            total
+        })
+        .sorted()
+        .rev()
+        .collect::<Vec<_>>();
 
     let total = calories[0] + calories[1] + calories[2];
 

@@ -1,4 +1,8 @@
-use std::{fs::File, io::{BufReader, BufRead}, fmt::Display};
+use std::{
+    fmt::Display,
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 use itertools::Itertools;
 
@@ -10,36 +14,38 @@ struct Group {
 
 impl Group {
     pub fn contains_total_overlap(&self) -> bool {
-        (self.first.0 >= self.second.0 && self.first.1 <= self.second.1) ||
-            (self.second.0 >= self.first.0 && self.second.1 <= self.first.1)
+        (self.first.0 >= self.second.0 && self.first.1 <= self.second.1)
+            || (self.second.0 >= self.first.0 && self.second.1 <= self.first.1)
     }
 
     pub fn contains_overlap(&self) -> bool {
-        (self.first.0 >= self.second.0 && self.first.0 <= self.second.1) ||
-            (self.first.1 >= self.second.0 && self.first.1 <= self.second.1) ||
-            self.contains_total_overlap()
+        (self.first.0 >= self.second.0 && self.first.0 <= self.second.1)
+            || (self.first.1 >= self.second.0 && self.first.1 <= self.second.1)
+            || self.contains_total_overlap()
     }
 }
 
 impl Display for Group {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Elf 1: {}-{}\nElf 2: {}-{}", self.first.0, self.first.1, self.second.0, self.second.1)
+        write!(
+            f,
+            "Elf 1: {}-{}\nElf 2: {}-{}",
+            self.first.0, self.first.1, self.second.0, self.second.1
+        )
     }
 }
 
 fn parse_line(line: &str) -> Group {
-    let number_groups = line.chars().group_by(|char| {
-        char.is_digit(10)
-    });
-    let numbers = number_groups.into_iter()
-        .filter(|group| {
-            group.0
-        })
-        .map(|number| {
-            number.1.collect::<String>().parse::<u32>().unwrap()
-        });
+    let number_groups = line.chars().group_by(|char| char.is_ascii_digit());
+    let numbers = number_groups
+        .into_iter()
+        .filter(|group| group.0)
+        .map(|number| number.1.collect::<String>().parse::<u32>().unwrap());
     let numbers = numbers.collect::<Vec<u32>>();
-    Group { first: (numbers[0], numbers[1]), second: (numbers[2], numbers[3])}
+    Group {
+        first: (numbers[0], numbers[1]),
+        second: (numbers[2], numbers[3]),
+    }
 }
 
 fn main() -> Result<(), ()> {

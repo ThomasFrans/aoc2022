@@ -1,7 +1,9 @@
-use std::{fs::File, io::{BufReader, BufRead}};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 use itertools::Itertools;
-
 
 trait RuckSack {
     fn first_compartment(&self) -> &str;
@@ -23,7 +25,7 @@ fn item_to_priority(item: char) -> Result<u32, ()> {
 
 fn shared_character(elves: Vec<String>) -> Result<char, ()> {
     if elves.len() < 2 {
-        return Err(());
+        Err(())
     } else {
         let first_elf = &elves[0];
         let mut found = None;
@@ -42,15 +44,19 @@ fn shared_character(elves: Vec<String>) -> Result<char, ()> {
 
 impl RuckSack for String {
     fn first_compartment(&self) -> &str {
-        self.split_at(self.len()/2).0
+        self.split_at(self.len() / 2).0
     }
 
     fn second_compartment(&self) -> &str {
-        self.split_at(self.len()/2).1
+        self.split_at(self.len() / 2).1
     }
 
     fn shared_item_accross_compartments(&self) -> char {
-        println!("First: {}, Second: {}", self.first_compartment(), self.second_compartment());
+        println!(
+            "First: {}, Second: {}",
+            self.first_compartment(),
+            self.second_compartment()
+        );
         for item in self.first_compartment().chars() {
             if self.second_compartment().contains(item) {
                 return item;
@@ -76,13 +82,15 @@ fn main() {
     let input = File::open("data/day3.txt").unwrap();
     let reader = BufReader::new(input);
 
-    let mut groups: Vec<Vec<String>> = Vec::new();
-
+    let _groups: Vec<Vec<String>> = Vec::new();
 
     let mut total = 0;
 
     for group in &reader.lines().chunks(3) {
-        total += item_to_priority(shared_character(group.map(|string| string.unwrap()).collect_vec()).unwrap()).unwrap();
+        total += item_to_priority(
+            shared_character(group.map(|string| string.unwrap()).collect_vec()).unwrap(),
+        )
+        .unwrap();
     }
 
     println!("The total priority of all the items is {total_priority}.");

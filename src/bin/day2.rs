@@ -1,4 +1,7 @@
-use std::{fs::File, io::{BufReader, BufRead}};
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 #[derive(Eq, PartialEq)]
 enum RPSChoice {
@@ -44,7 +47,7 @@ struct Game {
 }
 
 impl Game {
-    fn player1_score(&self) -> u32 {
+    fn _player1_score(&self) -> u32 {
         let mut score = 0;
         score += match self.player1 {
             RPSChoice::Rock => 1,
@@ -53,7 +56,10 @@ impl Game {
         };
         if self.player1 == self.player2 {
             score += 3;
-        } else if (self.player1 == RPSChoice::Rock && self.player2 == RPSChoice::Scissors) || (self.player1 == RPSChoice::Paper && self.player2 == RPSChoice::Rock) || (self.player1 == RPSChoice::Scissors && self.player2 == RPSChoice::Paper) {
+        } else if (self.player1 == RPSChoice::Rock && self.player2 == RPSChoice::Scissors)
+            || (self.player1 == RPSChoice::Paper && self.player2 == RPSChoice::Rock)
+            || (self.player1 == RPSChoice::Scissors && self.player2 == RPSChoice::Paper)
+        {
             score += 6;
         }
         score
@@ -68,7 +74,10 @@ impl Game {
         };
         let other_score = if self.player1 == self.player2 {
             3
-        } else if (self.player1 == RPSChoice::Rock && self.player2 == RPSChoice::Scissors) || (self.player1 == RPSChoice::Paper && self.player2 == RPSChoice::Rock) || (self.player1 == RPSChoice::Scissors && self.player2 == RPSChoice::Paper) {
+        } else if (self.player1 == RPSChoice::Rock && self.player2 == RPSChoice::Scissors)
+            || (self.player1 == RPSChoice::Paper && self.player2 == RPSChoice::Rock)
+            || (self.player1 == RPSChoice::Scissors && self.player2 == RPSChoice::Paper)
+        {
             6
         } else {
             0
@@ -95,7 +104,7 @@ fn main() {
                 b'Y' => RPSChoice::try_from(player1_choice).unwrap(),
                 b'Z' => RPSChoice::would_win_from(RPSChoice::try_from(player1_choice).unwrap()),
                 _ => panic!(),
-            }
+            },
         });
     }
 
@@ -105,4 +114,3 @@ fn main() {
 
     println!("My score would be {total}.");
 }
-
