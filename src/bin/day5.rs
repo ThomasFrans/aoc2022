@@ -4,8 +4,13 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     ops::{Deref, DerefMut},
-    process::ExitCode,
+    process::{exit, ExitCode},
 };
+
+fn exit_with_message(message: &str, code: i32) -> ! {
+    eprintln!("{message}");
+    exit(code)
+}
 
 #[derive(Debug, Clone)]
 struct Crate(char);
@@ -93,6 +98,7 @@ impl TryFrom<Vec<String>> for Cargo {
 
     fn try_from(data: Vec<String>) -> Result<Self, Self::Error> {
         // Vec<String> (lines) to Iterator<Item=String> (over lines).
+        // Omit the last line which isn't data.
         let cargo = data[..data.len() - 1]
             .iter()
             .map(|line| {
@@ -118,11 +124,11 @@ impl TryFrom<Vec<String>> for Cargo {
                                 }
                             })
                             .next()
-                            .unwrap()
+                            .ok_or(())
                     })
-                    .collect::<Vec<Option<Crate>>>()
+                    .collect::<Result<Vec<Option<Crate>>, ()>>()
             })
-            .collect_vec();
+            .collect::<Result<Vec<_>, ()>>()?;
         let mut crates: Vec<Stack> = Vec::new();
         for stack_item in 0..cargo[0].len() {
             let mut stack: Vec<Crate> = Vec::new();
@@ -152,19 +158,27 @@ impl TryFrom<Vec<String>> for Operations {
                     .filter_map(|(key, value)| {
                         if key {
                             let string_value = value.collect::<String>();
-                            Some(string_value.parse::<usize>().unwrap())
+                            if let Ok(parsed_value) = string_value.parse::<usize>() {
+                                Some(Ok(parsed_value))
+                            } else {
+                                Some(Err(()))
+                            }
                         } else {
                             None
                         }
                     })
-                    .collect_vec();
-                Operation {
-                    amount: values[0],
-                    from: values[1],
-                    to: values[2],
+                    .collect::<Result<Vec<usize>, ()>>();
+                if let Ok(values) = values {
+                    if let [amount, from, to] = values[..] {
+                        Ok(Operation { amount, from, to })
+                    } else {
+                        Err(())
+                    }
+                } else {
+                    Err(())
                 }
             })
-            .collect_vec();
+            .collect::<Result<Vec<Operation>, ()>>()?;
         Ok(Self(a))
     }
 }
@@ -187,7 +201,9 @@ impl<'a> CrateMover9000<'a> {
 
     fn move_crates(&mut self, operation: &Operation) {
         for _ in 0..operation.amount {
-            let popped_crate = self.crates[operation.from - 1].pop().unwrap();
+            let popped_crate = self.crates[operation.from - 1]
+                .pop()
+                .expect("Ran out of crates to remove.");
             self.crates[operation.to - 1].push(popped_crate);
         }
     }
@@ -212,7 +228,9 @@ impl<'a> CrateMover9001<'a> {
     fn move_crates(&mut self, operation: &Operation) {
         let mut reverse = Vec::new();
         for _ in 0..operation.amount {
-            let popped_crate = self.crates[operation.from - 1].pop().unwrap();
+            let popped_crate = self.crates[operation.from - 1]
+                .pop()
+                .expect("Ran out of crates to remove.");
             reverse.push(popped_crate);
         }
         for _ in 0..operation.amount {
@@ -222,13 +240,16 @@ impl<'a> CrateMover9001<'a> {
 }
 
 fn main() -> ExitCode {
-    let file = File::open("data/day5.txt").unwrap();
+    let filename = "data/day5.txt";
+    let Ok(file) = File::open(filename) else {
+        exit_with_message(&format!("Can't open file {}.", filename), 1)
+    };
     let lines = BufReader::new(file).lines();
 
     // Split at the double newline.
     // Conceptually: (crate_data, movement_data)
     let groups = lines
-        .map(|line| line.unwrap())
+        .map(|line| line.expect("Invalid line in file."))
         // Iterator over Iterator<Item=String>
         .group_by(|line| line.is_empty()); // First group is crates, second is operations.
                                            // data[0] are the crates, data[1] the moves.
@@ -240,8 +261,14 @@ fn main() -> ExitCode {
         .collect::<Vec<Vec<String>>>();
 
     // Parsing.
-    let crates = Cargo::try_from(data[0].clone()).unwrap();
-    let operations = Operations::try_from(data[1].clone()).unwrap();
+    let Ok(crates) = Cargo::try_from(data[0].clone()) else {
+        eprintln!("Cargo data isn't in the correct format.");
+        return ExitCode::FAILURE;
+    };
+    let Ok(operations) = Operations::try_from(data[1].clone()) else {
+        eprintln!("Operation data isn't in the correct format.");
+        return ExitCode::FAILURE;
+    };
 
     // Part 1
     let mut crates1 = crates.clone();
