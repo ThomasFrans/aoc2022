@@ -42,9 +42,9 @@ impl DerefMut for Stack {
 }
 
 #[derive(Debug, Clone)]
-struct Crates(Vec<Stack>);
+struct Cargo(Vec<Stack>);
 
-impl Deref for Crates {
+impl Deref for Cargo {
     type Target = Vec<Stack>;
 
     fn deref(&self) -> &Self::Target {
@@ -52,31 +52,31 @@ impl Deref for Crates {
     }
 }
 
-impl DerefMut for Crates {
+impl DerefMut for Cargo {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
 #[derive(Debug)]
-struct Move {
+struct Operation {
     pub amount: usize,
     pub from: usize,
     pub to: usize,
 }
 
 #[derive(Debug)]
-struct Moves(Vec<Move>);
+struct Operations(Vec<Operation>);
 
-impl Deref for Moves {
-    type Target = Vec<Move>;
+impl Deref for Operations {
+    type Target = Vec<Operation>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl DerefMut for Moves {
+impl DerefMut for Operations {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -88,7 +88,7 @@ impl Display for Crate {
     }
 }
 
-impl TryFrom<Vec<String>> for Crates {
+impl TryFrom<Vec<String>> for Cargo {
     type Error = ();
 
     fn try_from(data: Vec<String>) -> Result<Self, Self::Error> {
@@ -133,15 +133,15 @@ impl TryFrom<Vec<String>> for Crates {
             }
             crates.push(Stack(stack));
         }
-        Ok(Crates(crates))
+        Ok(Cargo(crates))
     }
 }
 
-impl TryFrom<Vec<String>> for Moves {
+impl TryFrom<Vec<String>> for Operations {
     type Error = ();
 
-    fn try_from(moves_data: Vec<String>) -> Result<Self, Self::Error> {
-        let a = moves_data
+    fn try_from(operations_data: Vec<String>) -> Result<Self, Self::Error> {
+        let a = operations_data
             .into_iter()
             // Map lines to Move's.
             .map(|line| {
@@ -158,7 +158,7 @@ impl TryFrom<Vec<String>> for Moves {
                         }
                     })
                     .collect_vec();
-                Move {
+                Operation {
                     amount: values[0],
                     from: values[1],
                     to: values[2],
@@ -170,52 +170,54 @@ impl TryFrom<Vec<String>> for Moves {
 }
 
 struct CrateMover9000<'a> {
-    crates: &'a mut Crates,
-    moves: &'a Moves,
+    crates: &'a mut Cargo,
+    operations: &'a Operations,
 }
 
 impl<'a> CrateMover9000<'a> {
-    fn new(crates: &'a mut Crates, moves: &'a Moves) -> Self {
-        Self {
-            crates,
-            moves,
-        }
+    fn new(crates: &'a mut Cargo, operations: &'a Operations) -> Self {
+        Self { crates, operations }
     }
 
     fn execute(&mut self) {
-        self.moves.iter().for_each(|single| {
-            for _ in 0..single.amount {
-                let popped_crate = self.crates[single.from - 1].pop().unwrap();
-                self.crates[single.to - 1].push(popped_crate);
-            }
+        self.operations.iter().for_each(|single| {
+            self.move_crates(single);
         });
+    }
+
+    fn move_crates(&mut self, operation: &Operation) {
+        for _ in 0..operation.amount {
+            let popped_crate = self.crates[operation.from - 1].pop().unwrap();
+            self.crates[operation.to - 1].push(popped_crate);
+        }
     }
 }
 
 struct CrateMover9001<'a> {
-    crates: &'a mut Crates,
-    moves: &'a Moves,
+    crates: &'a mut Cargo,
+    operations: &'a Operations,
 }
 
 impl<'a> CrateMover9001<'a> {
-    fn new(crates: &'a mut Crates, moves: &'a Moves) -> Self {
-        Self {
-            crates,
-            moves,
-        }
+    fn new(crates: &'a mut Cargo, operations: &'a Operations) -> Self {
+        Self { crates, operations }
     }
 
     fn execute(&mut self) {
-        self.moves.iter().for_each(|single| {
-            let mut reverse = Vec::new();
-            for _ in 0..single.amount {
-                let popped_crate = self.crates[single.from - 1].pop().unwrap();
-                reverse.push(popped_crate);
-            }
-            for _ in 0..single.amount {
-                self.crates[single.to - 1].push(reverse.pop().unwrap());
-            }
+        self.operations.iter().for_each(|single| {
+            self.move_crates(single);
         });
+    }
+
+    fn move_crates(&mut self, operation: &Operation) {
+        let mut reverse = Vec::new();
+        for _ in 0..operation.amount {
+            let popped_crate = self.crates[operation.from - 1].pop().unwrap();
+            reverse.push(popped_crate);
+        }
+        for _ in 0..operation.amount {
+            self.crates[operation.to - 1].push(reverse.pop().unwrap());
+        }
     }
 }
 
@@ -224,12 +226,12 @@ fn main() -> ExitCode {
     let lines = BufReader::new(file).lines();
 
     // Split at the double newline.
+    // Conceptually: (crate_data, movement_data)
     let groups = lines
         .map(|line| line.unwrap())
         // Iterator over Iterator<Item=String>
         .group_by(|line| line.is_empty()); // First group is crates, second is operations.
-
-    // data[0] are the crates, data[1] the moves.
+                                           // data[0] are the crates, data[1] the moves.
     let data = groups
         .into_iter()
         // Only keep the groups that contained data.
@@ -237,12 +239,13 @@ fn main() -> ExitCode {
         .map(|(_, value)| value.collect::<Vec<String>>())
         .collect::<Vec<Vec<String>>>();
 
-    let crates = Crates::try_from(data[0].clone()).unwrap();
-    let moves = Moves::try_from(data[1].clone()).unwrap();
+    // Parsing.
+    let crates = Cargo::try_from(data[0].clone()).unwrap();
+    let operations = Operations::try_from(data[1].clone()).unwrap();
 
     // Part 1
     let mut crates1 = crates.clone();
-    CrateMover9000::new(&mut crates1, &moves).execute();
+    CrateMover9000::new(&mut crates1, &operations).execute();
     crates1.iter().for_each(|stack| {
         print!("{}", stack.last().unwrap());
     });
@@ -250,7 +253,7 @@ fn main() -> ExitCode {
 
     // Part 2
     let mut crates2 = crates;
-    CrateMover9001::new(&mut crates2, &moves).execute();
+    CrateMover9001::new(&mut crates2, &operations).execute();
     crates2.iter().for_each(|stack| {
         print!("{}", stack.last().unwrap());
     });
