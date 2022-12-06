@@ -1,5 +1,6 @@
 use itertools::Itertools;
 use std::{
+    env,
     fmt::Display,
     fs::File,
     io::{BufRead, BufReader},
@@ -239,11 +240,29 @@ impl<'a> CrateMover9001<'a> {
     }
 }
 
+struct ProgramArguments {
+    input_filename: String,
+}
+
+impl ProgramArguments {
+    fn new() -> Result<Self, ()> {
+        let mut arguments = env::args();
+
+        let input_filename = arguments.nth(1).ok_or(())?;
+
+        Ok(Self { input_filename })
+    }
+}
+
 fn main() -> ExitCode {
-    let filename = "data/day5.txt";
-    let Ok(file) = File::open(filename) else {
-        exit_with_message(&format!("Can't open file {}.", filename), 1)
+    let Ok(arguments) = ProgramArguments::new() else {
+        exit_with_message("Not all required arguments given.", 1);
     };
+
+    let Ok(file) = File::open(&arguments.input_filename) else {
+        exit_with_message(&format!("Can't open file {}.", &arguments.input_filename), 1)
+    };
+
     let lines = BufReader::new(file).lines();
 
     // Split at the double newline.
@@ -251,21 +270,24 @@ fn main() -> ExitCode {
     let groups = lines
         .map(|line| line.expect("Invalid line in file."))
         // Iterator over Iterator<Item=String>
-        .group_by(|line| line.is_empty()); // First group is crates, second is operations.
-                                           // data[0] are the crates, data[1] the moves.
-    let data = groups
+        .group_by(|line| line.is_empty());
+
+    // Can't destructure into owned types :(
+    let [cargo_data, operation_data] = &groups
         .into_iter()
         // Only keep the groups that contained data.
         .filter(|(empty, _)| !empty)
         .map(|(_, value)| value.collect::<Vec<String>>())
-        .collect::<Vec<Vec<String>>>();
+        .collect::<Vec<Vec<String>>>()[..] else {
+            exit_with_message("Input file not valid data.", 1);
+    };
 
     // Parsing.
-    let Ok(crates) = Cargo::try_from(data[0].clone()) else {
+    let Ok(crates) = Cargo::try_from(cargo_data.clone()) else {
         eprintln!("Cargo data isn't in the correct format.");
         return ExitCode::FAILURE;
     };
-    let Ok(operations) = Operations::try_from(data[1].clone()) else {
+    let Ok(operations) = Operations::try_from(operation_data.clone()) else {
         eprintln!("Operation data isn't in the correct format.");
         return ExitCode::FAILURE;
     };
