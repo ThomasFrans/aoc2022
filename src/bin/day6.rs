@@ -3,7 +3,7 @@ use std::{
     fmt::{Debug, Display},
 };
 
-use crate::message::ElfMessage;
+use crate::message::ElfMessageParser;
 
 struct ProgramArguments {
     /// The filename of the file that contains the message to decode.
@@ -29,11 +29,11 @@ mod message {
     const HEADER_SIZE: usize = 4;
     const START_OF_MESSAGE_HEADER_SIZE: usize = 14;
 
-    pub struct ElfMessage {
-        pub data: String,
+    pub struct ElfMessageParser<'a> {
+        pub data: &'a mut str,
     }
 
-    impl ElfMessage {
+    impl ElfMessageParser<'_> {
         /// The header as specified in the hyper elf transfer protocol v6.
         ///
         /// Returns all the data until the header has been read, which is all
@@ -96,8 +96,8 @@ impl<T: Display + 'static> From<T> for ProgramError {
 
 fn main() -> Result<(), ProgramError> {
     let arguments = ProgramArguments::from_env()?;
-    let input = std::fs::read_to_string(&arguments.filename)?;
-    let message = ElfMessage { data: input };
+    let mut input = std::fs::read_to_string(&arguments.filename)?;
+    let message = ElfMessageParser { data: &mut input };
 
     // Part 1
     println!("Length of header is {}.", message.header()?.len());
