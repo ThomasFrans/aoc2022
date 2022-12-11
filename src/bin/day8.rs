@@ -1,6 +1,5 @@
 use std::fs;
 
-
 type Tree = u8;
 
 #[derive(Debug)]
@@ -18,7 +17,7 @@ impl Trees {
                 start_y = false;
             }
         }
-        for row_index in row+1..self.rows() {
+        for row_index in row + 1..self.rows() {
             if self.0[row_index][column] >= height {
                 end_y = false;
             }
@@ -28,7 +27,7 @@ impl Trees {
                 start_x = false;
             }
         }
-        for column_index in column+1..self.columns() {
+        for column_index in column + 1..self.columns() {
             if self.0[row][column_index] >= height {
                 end_x = false;
             }
@@ -70,7 +69,7 @@ impl Trees {
                 break;
             }
         }
-        for i in column+1..self.columns() {
+        for i in column + 1..self.columns() {
             if self.0[row][i] < own_height {
                 viewing_distance_right += 1;
             } else {
@@ -86,7 +85,7 @@ impl Trees {
                 break;
             }
         }
-        for i in row+1..self.rows() {
+        for i in row + 1..self.rows() {
             if self.0[i][column] < own_height {
                 viewing_distance_bottom += 1;
             } else {
@@ -95,7 +94,10 @@ impl Trees {
             }
         }
 
-        viewing_distance_top * viewing_distance_right * viewing_distance_bottom * viewing_distance_left
+        viewing_distance_top
+            * viewing_distance_right
+            * viewing_distance_bottom
+            * viewing_distance_left
     }
 
     fn best_scenic_score(&self) -> usize {

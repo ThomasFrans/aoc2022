@@ -1,8 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fs,
-    ops::Add,
-};
+use std::{collections::HashSet, fs};
 
 #[derive(Debug)]
 enum Move {
@@ -46,7 +42,7 @@ impl<'a> From<&'a [Move]> for RopeSimulation<'a> {
         for change in result.moves {
             match change {
                 Move::Up(amount) => {
-                    for i in 0..*amount {
+                    for _i in 0..*amount {
                         if result.head_coordinate.1 > result.tail_coordinate.1 {
                             result.tail_coordinate.1 += 1;
                             result.tail_coordinate.0 = result.head_coordinate.0;
@@ -56,7 +52,7 @@ impl<'a> From<&'a [Move]> for RopeSimulation<'a> {
                     }
                 }
                 Move::Down(amount) => {
-                    for i in 0..*amount {
+                    for _i in 0..*amount {
                         if result.head_coordinate.1 < result.tail_coordinate.1 {
                             result.tail_coordinate.1 -= 1;
                             result.tail_coordinate.0 = result.head_coordinate.0;
@@ -66,7 +62,7 @@ impl<'a> From<&'a [Move]> for RopeSimulation<'a> {
                     }
                 }
                 Move::Left(amount) => {
-                    for i in 0..*amount {
+                    for _i in 0..*amount {
                         if result.head_coordinate.0 < result.tail_coordinate.0 {
                             result.tail_coordinate.0 -= 1;
                             result.tail_coordinate.1 = result.head_coordinate.1;
@@ -76,7 +72,7 @@ impl<'a> From<&'a [Move]> for RopeSimulation<'a> {
                     }
                 }
                 Move::Right(amount) => {
-                    for i in 0..*amount {
+                    for _i in 0..*amount {
                         if result.head_coordinate.0 > result.tail_coordinate.0 {
                             result.tail_coordinate.0 += 1;
                             result.tail_coordinate.1 = result.head_coordinate.1;
@@ -103,7 +99,7 @@ struct Rope<const S: usize> {
 impl<const S: usize> Rope<S> {
     fn attach_to(&mut self, this: usize, other: usize) {
         // Scuffed but it works.
-        let other = self.segments[other].clone();
+        let other = self.segments[other];
         let this = &mut self.segments[this];
         if other.y - this.y == 2 && other.x - this.x == 2 {
             this.y += 1;
@@ -166,11 +162,6 @@ enum Direction {
     Right,
 }
 
-struct Move2 {
-    amount: usize,
-    direction: Direction,
-}
-
 #[derive(Copy, Clone, Hash, Eq, Ord, PartialEq, PartialOrd)]
 struct XY {
     pub x: i32,
@@ -193,28 +184,28 @@ fn main() {
             Move::Up(amount) => {
                 for _ in 0..*amount {
                     rope.apply_move(Direction::Up);
-                    let coord = rope.segments.last().unwrap().clone();
+                    let coord = *rope.segments.last().unwrap();
                     visited.insert(coord);
                 }
             }
             Move::Down(amount) => {
                 for _ in 0..*amount {
                     rope.apply_move(Direction::Down);
-                    let coord = rope.segments.last().unwrap().clone();
+                    let coord = *rope.segments.last().unwrap();
                     visited.insert(coord);
                 }
             }
             Move::Left(amount) => {
                 for _ in 0..*amount {
                     rope.apply_move(Direction::Left);
-                    let coord = rope.segments.last().unwrap().clone();
+                    let coord = *rope.segments.last().unwrap();
                     visited.insert(coord);
                 }
             }
             Move::Right(amount) => {
                 for _ in 0..*amount {
                     rope.apply_move(Direction::Right);
-                    let coord = rope.segments.last().unwrap().clone();
+                    let coord = *rope.segments.last().unwrap();
                     visited.insert(coord);
                 }
             }
