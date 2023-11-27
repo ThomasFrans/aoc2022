@@ -260,7 +260,10 @@ fn main() -> ExitCode {
     };
 
     let Ok(file) = File::open(&arguments.input_filename) else {
-        exit_with_message(&format!("Can't open file {}.", &arguments.input_filename), 1)
+        exit_with_message(
+            &format!("Can't open file {}.", &arguments.input_filename),
+            1,
+        )
     };
 
     let lines = BufReader::new(file).lines();
@@ -278,8 +281,9 @@ fn main() -> ExitCode {
         // Only keep the groups that contained data.
         .filter(|(empty, _)| !empty)
         .map(|(_, value)| value.collect::<Vec<String>>())
-        .collect::<Vec<Vec<String>>>()[..] else {
-            exit_with_message("Input file not valid data.", 1);
+        .collect::<Vec<Vec<String>>>()[..]
+    else {
+        exit_with_message("Input file not valid data.", 1);
     };
 
     // Parsing.

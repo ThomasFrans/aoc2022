@@ -10,7 +10,10 @@ fn main() -> Result<(), String> {
     let file_location = "data/day1.txt";
 
     let Ok(file) = File::open(file_location) else {
-        return Err(format!("Failed to open file {}, maybe it doesn't exist.", file_location));
+        return Err(format!(
+            "Failed to open file {}, maybe it doesn't exist.",
+            file_location
+        ));
     };
 
     let file_reader = BufReader::new(file);

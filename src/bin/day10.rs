@@ -39,7 +39,7 @@ struct Cpu<'a> {
     register: i32,
 }
 
-impl<'a> Cpu<'_> {
+impl Cpu<'_> {
     fn run_cycle(&mut self) -> Result<(), ()> {
         match self.instructions[self.current_instruction] {
             Instruction::Noop => {

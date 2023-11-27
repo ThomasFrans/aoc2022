@@ -96,7 +96,7 @@ impl<T: Display + 'static> From<T> for ProgramError {
 
 fn main() -> Result<(), ProgramError> {
     let arguments = ProgramArguments::from_env()?;
-    let mut input = std::fs::read_to_string(&arguments.filename)?;
+    let mut input = std::fs::read_to_string(arguments.filename)?;
     let message = ElfMessageParser { data: &mut input };
 
     // Part 1

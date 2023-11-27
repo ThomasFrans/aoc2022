@@ -156,9 +156,7 @@ impl Directory {
 impl Display for Directory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "- {} (dir)", self.name).unwrap();
-        for entry in
-            self.content.values().into_iter().collect_vec()[..self.content.len() - 1].iter()
-        {
+        for entry in self.content.values().collect_vec()[..self.content.len() - 1].iter() {
             writeln!(f, "\t{}", entry).unwrap();
         }
         if let Some(item) = self.content.values().last() {
